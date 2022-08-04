@@ -16,6 +16,8 @@ ARGS="--input URL1 --commit"
 ```
 
 ```
+pip3 install -r requirements.txt
+
 curl -o /usr/local/bin/unbound-blocker.py https://raw.githubusercontent.com/egonrassi/unbound-blocker/main/unbound-blocker.py 
 chmod +x /usr/local/bin/unbound-blocker.py
 
