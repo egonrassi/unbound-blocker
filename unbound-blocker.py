@@ -2,7 +2,7 @@
 
 # EgonRassi Unbound Blocker from list
 
-import argparse,requests
+import argparse,requests,validators
 
 #Define const
 currentlist=[]
@@ -36,8 +36,9 @@ for urlinput in args.input:
     raise SystemExit(e)
 
  for bllist in r.text.split("\n"):
-    if bllist != "":
-      freshlist.append(bllist)
+  #Verify the domain is valid, and add it to the list if it does
+  if validators.domain(bllist):
+    freshlist.append(bllist)
 
 # Get the current state
 o = rc.send_command(cmd="list_local_zones")
