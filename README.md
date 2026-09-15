@@ -7,30 +7,46 @@ Example:
 unbound-blocker.py --input URL1 --input URL2 --ignore ".+\.is"
 ```
 
-Copy the script to /usr/local/bin
 Run it according to a timer with systemd
 Define the input arguments in the environmental file found in either /etc/sysconfig or /etc/default
-The environmental file should hold the following
+The environmental file should at least hold the following
 ```
 ARGS="--input URL1 --commit"
 ```
+An example from an Ubuntu server
+```
+ARGS="--input https://example.com/json.example --json --unboundsocket /run/unbound.ctl --commit"
+```
+
+Install the pip and venv packages from your repos.
+Create a service account to run the service and add it to the unbound group for permissions to the control socket
+```
+useradd -m -s /bin/bash unbound-blocker -G unbound
+```
+
+Create a virtual environment for the user and install the requirements
+```
+sudo su - unbound-blocker
+curl -o /home/unbound-blocker/requirements.txt https://raw.githubusercontent.com/egonrassi/unbound-blocker/main/requirements.txt
+curl -o /home/unbound-blocker/unbound-blocker.py https://raw.githubusercontent.com/egonrassi/unbound-blocker/main/unbound-blocker.py
+python3 -m venv venv
+source venv/bin/activate
+pip3 install -r requirements.txt
+```
+Now create the systemd service and timer to run the command every once in a while.
 
 ```
-pip3 install -r requirements.txt
-
-curl -o /usr/local/bin/unbound-blocker.py https://raw.githubusercontent.com/egonrassi/unbound-blocker/main/unbound-blocker.py 
-chmod +x /usr/local/bin/unbound-blocker.py
-
-
 cat <<EOF > /etc/systemd/system/unbound-blocker.service
 [Unit]
 Description=unbound-blocker
 
 [Service]
+User=unbound-blocker
+Group=unbound-blocker
+WorkingDirectory=/home/unbound-blocker
 EnvironmentFile=-/etc/sysconfig/unbound-blocker
 EnvironmentFile=-/etc/default/unbound-blocker
-ExecStart=/usr/local/bin/unbound-blocker.py \$ARGS
-
+ExecStart=/home/unbound-blocker/venv/bin/python /home/unbound-blocker/unbound-blocker.py $ARGS
 EOF
 
 cat <<EOF > /etc/systemd/system/unbound-blocker.timer
