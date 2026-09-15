@@ -46,7 +46,7 @@ Group=unbound-blocker
 WorkingDirectory=/home/unbound-blocker
 EnvironmentFile=-/etc/sysconfig/unbound-blocker
 EnvironmentFile=-/etc/default/unbound-blocker
-ExecStart=/home/unbound-blocker/venv/bin/python /home/unbound-blocker/unbound-blocker.py $ARGS
+ExecStart=/home/unbound-blocker/venv/bin/python /home/unbound-blocker/unbound-blocker.py \$ARGS
 
 [Install]
 WantedBy=multi-user.target
