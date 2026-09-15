@@ -67,4 +67,5 @@ EOF
 systemctl daemon-reload
 systemctl enable unbound-blocker.service
 systemctl enable unbound-blocker.timer
+systemctl start unbound-blocker.timer
 ```
