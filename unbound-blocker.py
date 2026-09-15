@@ -27,21 +27,41 @@ def main(args):
       r = requests.get(urlinput[0])
     except requests.exceptions.RequestException as e:
       raise SystemExit(e)
+    if args.isjson:
+      try:
+        jsondata = r.json()
+        blockdomains = [d["value"] for d in jsondata["domains"]]
+        for blocklist in blockdomains:
+          if not validators.domain(blocklist):
+            continue
+          if args.ignore:
+            for ignlist in args.ignore:
+              if re.search(ignlist[0], blocklist):
+                break
+            else:
+              freshlist.append(blocklist)
+          else:
+            freshlist.append(blocklist)
+      except ValueError as e:
+        raise SystemExit("Invalid JSON input: " + str(e))
 
-    for blocklist in r.text.split("\n"):
-      if not validators.domain(blocklist):
-        continue
-      if args.ignore:
-        for ignlist in args.ignore:
-          if re.search(ignlist[0], blocklist):
-            break
+    if not args.isjson:
+      for blocklist in r.text.split("\n"):
+        if not validators.domain(blocklist):
+          continue
+        if args.ignore:
+          for ignlist in args.ignore:
+            if re.search(ignlist[0], blocklist):
+              break
+          else:
+            freshlist.append(blocklist)
         else:
           freshlist.append(blocklist)
-      else:
-        freshlist.append(blocklist)
-
   # Connect to Unbound Control
-  rc = RemoteControl(host=args.ubhost, port=args.ubport,
+  if args.ubsocket:
+    rc = RemoteControl(unix_sock=args.ubsocket)
+  else:
+    rc = RemoteControl(host=args.ubhost, port=args.ubport,
                     server_cert = args.ubservercert,
                     client_cert= args.ubclientcert,
                     client_key= args.ubclientkey)
@@ -80,6 +100,8 @@ if __name__ == '__main__':
   # Parse args
   parser = argparse.ArgumentParser(description='Block domains in Unbound through a public list')
   parser.add_argument('--input', dest='input', action='append', nargs='+', required=True, help='URL to the public list for domains to block - Multiple arguments allowed')
+  parser.add_argument('--json', dest='isjson', action='store_true', required=False, help='JSON input')
+  parser.add_argument('--unboundsocket', dest='ubsocket', required=False, help='Unbound Control server socket')
   parser.add_argument('--unboundhost', dest='ubhost', default='localhost', help='Unbound Control server address or hostname')
   parser.add_argument('--unboundport', dest='ubport', default=8953, type=int, help='Unbound Control server port')
   parser.add_argument('--unboundservercert', dest='ubservercert', default='/etc/unbound/unbound_server.pem', help='Unbound Control Server Certificate')
